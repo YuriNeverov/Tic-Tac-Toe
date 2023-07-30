@@ -1,8 +1,9 @@
 import argparse
-import os
 import sys
 
-sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from pathlib import Path
+
+sys.path.insert(1, Path(__file__).absolute().parent.parent.as_posix())
 
 
 def main():

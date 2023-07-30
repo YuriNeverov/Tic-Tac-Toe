@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 
 class Position:
@@ -10,17 +10,28 @@ class Position:
         self.x = x
         self.y = y
 
+    def clone(self):
+        return Position(self.x, self.y)
+    
+    def add(self, x: int, y: int):
+        self.x += x
+        self.y += y
+
+    def addTuple(self, v: Tuple[int, int]):
+        assert isinstance(v, tuple) and len(v) == 2
+        self.add(v[0], v[1])
+
 
 class Symbol(Enum):
     BLANK = 0
     CROSS = 1
-    CIRCLE = 2
+    NOUGHT = 2
 
 
 def invertTeam(sym: Symbol):
     if sym == Symbol.CROSS:
-        return Symbol.CIRCLE
-    if sym == Symbol.CIRCLE:
+        return Symbol.NOUGHT
+    if sym == Symbol.NOUGHT:
         return Symbol.CROSS
     return sym
 
@@ -30,6 +41,7 @@ class MoveError(Enum):
     WRONG_TEAM = 1
     WRONG_PLACE = 2
     WRONG_SYMBOL = 3
+    GAME_ALREADY_OVER = 4
 
 
 class Player:
@@ -98,12 +110,17 @@ class Board:
         self._hash ^= Board.hashForPos((q, i, j), sym)
         self.repr[q][i][j] = sym
 
-    def getSymbol(self, pos: Position) -> Symbol:
+    def getSymbol(self, pos: Position) -> Optional[Symbol]:
+        if not self.fits(pos):
+            return None
         q, i, j = self.getReprIndex(pos)
         return self.repr[q][i][j]
 
     def posDifference(self, pos: Position) -> int:
         return max(0, max(abs(pos.x), abs(pos.y)) - self.getRadius())
+    
+    def fits(self, pos: Position):
+        return self.posDifference(pos) > 0
 
     def makeFit(self, pos: Position):
         self.increaseRadius(self.getRadius() + self.posDifference(pos))
@@ -115,12 +132,20 @@ class Board:
 class Game:
     def __init__(self, players: List[Player], initRadius: int):
         self.curTeam = Symbol.CROSS
+        # self.status is winner team when game is over, Symbol.BLANK otherwise
+        self.status = Symbol.BLANK
         self.players = players
-        self.board = Board(initRadius)
+        self.board: Board = self.makeBoard(initRadius)
+    
+    def makeBoard(self, initRadius: int) -> Board:
+        return Board(initRadius)
 
     def makeMove(self, pos: Position, sym: Symbol) -> MoveError:
+        if self.status is not Symbol.BLANK:
+            return MoveError.GAME_ALREADY_OVER
         if self.curTeam != sym:
             return MoveError.WRONG_TEAM
+        self.board.makeFit(pos)
         if self.board.getSymbol(pos) != Symbol.BLANK:
             return MoveError.WRONG_PLACE
         if sym == Symbol.BLANK:
