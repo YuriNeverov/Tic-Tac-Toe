@@ -12,7 +12,7 @@ class Position:
 
     def clone(self):
         return Position(self.x, self.y)
-    
+
     def add(self, x: int, y: int):
         self.x += x
         self.y += y
@@ -118,7 +118,7 @@ class Board:
 
     def posDifference(self, pos: Position) -> int:
         return max(0, max(abs(pos.x), abs(pos.y)) - self.getRadius())
-    
+
     def fits(self, pos: Position):
         return self.posDifference(pos) > 0
 
@@ -136,7 +136,7 @@ class Game:
         self.status = Symbol.BLANK
         self.players = players
         self.board: Board = self.makeBoard(initRadius)
-    
+
     def makeBoard(self, initRadius: int) -> Board:
         return Board(initRadius)
 
